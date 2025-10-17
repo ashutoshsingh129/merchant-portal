@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
     Box,
     Typography,
-    Tabs,
-    Tab,
     Card,
     CardContent,
     Table,
@@ -29,43 +27,30 @@ import { styled } from '@mui/material/styles';
 import { stripeService, StripeTransaction } from '../../services/stripeService';
 
 const StyledContainer = styled(Box)(({ theme }) => ({
-    padding: theme.spacing(2),
+    padding: theme.spacing(1),
     backgroundColor: '#f8fafc',
     minHeight: '100vh',
 }));
 
 const HeaderSection = styled(Box)(({ theme }) => ({
     marginBottom: theme.spacing(3),
+    padding: theme.spacing(2),
+    backgroundColor: '#ffffff',
+    borderBottom: '1px solid #e2e8f0',
 }));
 
 const PageTitle = styled(Typography)(({ theme }) => ({
-    fontSize: '2rem',
+    fontSize: '1.5rem',
     fontWeight: 600,
-    color: '#1a202c',
-    marginBottom: theme.spacing(1),
-}));
-
-const StyledTabs = styled(Tabs)(({ theme }) => ({
-    '& .MuiTab-root': {
-        textTransform: 'none',
-        fontWeight: 500,
-        fontSize: '0.875rem',
-        minHeight: 48,
-        '&.Mui-selected': {
-            color: '#635bff',
-        },
-    },
-    '& .MuiTabs-indicator': {
-        backgroundColor: '#635bff',
-    },
+    color: '#2d3748',
 }));
 
 const SummaryCard = styled(Card)(({ theme }) => ({
     borderRadius: theme.spacing(1),
     border: '1px solid #e2e8f0',
     '&.selected': {
-        borderColor: '#635bff',
-        backgroundColor: '#f8f9ff',
+        borderColor: '#7c3aed',
+        backgroundColor: '#faf5ff',
     },
 }));
 
@@ -79,12 +64,12 @@ const SummaryCardContent = styled(CardContent)(({ theme }) => ({
 const SummaryNumber = styled(Typography)(({ theme }) => ({
     fontSize: '1.5rem',
     fontWeight: 600,
-    color: '#1a202c',
+    color: '#7c3aed',
 }));
 
 const SummaryLabel = styled(Typography)(({ theme }) => ({
     fontSize: '0.875rem',
-    color: '#64748b',
+    color: '#4a5568',
     marginTop: theme.spacing(0.5),
 }));
 
@@ -128,30 +113,7 @@ const CardBrandBox = styled(Box)(({ theme }) => ({
     fontWeight: 'bold',
 }));
 
-interface TabPanelProps {
-    children?: React.ReactNode;
-    index: number;
-    value: number;
-}
-
-function TabPanel(props: TabPanelProps) {
-    const { children, value, index, ...other } = props;
-
-    return (
-        <div
-            role="tabpanel"
-            hidden={value !== index}
-            id={`transactions-tabpanel-${index}`}
-            aria-labelledby={`transactions-tab-${index}`}
-            {...other}
-        >
-            {value === index && <Box>{children}</Box>}
-        </div>
-    );
-}
-
 const Transactions: React.FC = () => {
-    const [activeTab, setActiveTab] = useState(0);
     const [transactions, setTransactions] = useState<StripeTransaction[]>([]);
     const [summary, setSummary] = useState({
         total: 0,
@@ -165,8 +127,6 @@ const Transactions: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [selectedSummary, setSelectedSummary] = useState('all');
-
-    const tabs = [{ label: 'Payments', value: 'payments' }];
 
     useEffect(() => {
         fetchTransactions();
@@ -198,10 +158,6 @@ const Transactions: React.FC = () => {
         } catch (err) {
             console.error('Failed to fetch summary:', err);
         }
-    };
-
-    const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-        setActiveTab(newValue);
     };
 
     const handleSummaryClick = (type: string) => {
@@ -260,12 +216,6 @@ const Transactions: React.FC = () => {
         <StyledContainer>
             <HeaderSection>
                 <PageTitle>Transactions</PageTitle>
-
-                <StyledTabs value={activeTab} onChange={handleTabChange}>
-                    {tabs.map((tab, index) => (
-                        <Tab key={tab.value} label={tab.label} />
-                    ))}
-                </StyledTabs>
             </HeaderSection>
 
             {error && (
@@ -274,227 +224,194 @@ const Transactions: React.FC = () => {
                 </Alert>
             )}
 
-            <TabPanel value={activeTab} index={0}>
-                {/* Summary Cards */}
-                <Grid container spacing={2} sx={{ mb: 3 }}>
-                    <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-                        <SummaryCard
-                            className={
-                                selectedSummary === 'all' ? 'selected' : ''
-                            }
-                            onClick={() => handleSummaryClick('all')}
-                            sx={{ cursor: 'pointer' }}
-                        >
-                            <SummaryCardContent>
-                                <SummaryNumber>{summary.total}</SummaryNumber>
-                                <SummaryLabel>All</SummaryLabel>
-                            </SummaryCardContent>
-                        </SummaryCard>
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-                        <SummaryCard
-                            className={
-                                selectedSummary === 'succeeded'
-                                    ? 'selected'
-                                    : ''
-                            }
-                            onClick={() => handleSummaryClick('succeeded')}
-                            sx={{ cursor: 'pointer' }}
-                        >
-                            <SummaryCardContent>
-                                <SummaryNumber>
-                                    {summary.succeeded}
-                                </SummaryNumber>
-                                <SummaryLabel>Succeeded</SummaryLabel>
-                            </SummaryCardContent>
-                        </SummaryCard>
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-                        <SummaryCard
-                            className={
-                                selectedSummary === 'refunded' ? 'selected' : ''
-                            }
-                            onClick={() => handleSummaryClick('refunded')}
-                            sx={{ cursor: 'pointer' }}
-                        >
-                            <SummaryCardContent>
-                                <SummaryNumber>
-                                    {summary.refunded}
-                                </SummaryNumber>
-                                <SummaryLabel>Refunded</SummaryLabel>
-                            </SummaryCardContent>
-                        </SummaryCard>
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-                        <SummaryCard
-                            className={
-                                selectedSummary === 'disputed' ? 'selected' : ''
-                            }
-                            onClick={() => handleSummaryClick('disputed')}
-                            sx={{ cursor: 'pointer' }}
-                        >
-                            <SummaryCardContent>
-                                <SummaryNumber>
-                                    {summary.disputed}
-                                </SummaryNumber>
-                                <SummaryLabel>Disputed</SummaryLabel>
-                            </SummaryCardContent>
-                        </SummaryCard>
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-                        <SummaryCard
-                            className={
-                                selectedSummary === 'failed' ? 'selected' : ''
-                            }
-                            onClick={() => handleSummaryClick('failed')}
-                            sx={{ cursor: 'pointer' }}
-                        >
-                            <SummaryCardContent>
-                                <SummaryNumber>{summary.failed}</SummaryNumber>
-                                <SummaryLabel>Failed</SummaryLabel>
-                            </SummaryCardContent>
-                        </SummaryCard>
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-                        <SummaryCard
-                            className={
-                                selectedSummary === 'uncaptured'
-                                    ? 'selected'
-                                    : ''
-                            }
-                            onClick={() => handleSummaryClick('uncaptured')}
-                            sx={{ cursor: 'pointer' }}
-                        >
-                            <SummaryCardContent>
-                                <SummaryNumber>
-                                    {summary.uncaptured}
-                                </SummaryNumber>
-                                <SummaryLabel>Uncaptured</SummaryLabel>
-                            </SummaryCardContent>
-                        </SummaryCard>
-                    </Grid>
-                </Grid>
-
-                {/* Transactions Table */}
-                <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
-                    <StyledTable>
-                        <TableHead>
-                            <TableRow>
-                                <TableCell padding="checkbox"></TableCell>
-                                <TableCell>Amount</TableCell>
-                                <TableCell>Payment method</TableCell>
-                                <TableCell>Description</TableCell>
-                                <TableCell>Customer</TableCell>
-                                <TableCell>Date</TableCell>
-                                <TableCell>Settlement merchant</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {transactions.map(transaction => (
-                                <TableRow key={transaction.id} hover>
-                                    <TableCell padding="checkbox">
-                                        <input type="checkbox" />
-                                    </TableCell>
-                                    <TableCell>
-                                        <Typography
-                                            variant="body2"
-                                            fontWeight={500}
-                                        >
-                                            {stripeService.formatAmount(
-                                                transaction.amount,
-                                                transaction.currency
-                                            )}
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell>
-                                        <PaymentMethodBox>
-                                            {getStatusIcon(transaction.status)}
-                                            <StatusChip
-                                                label={transaction.status}
-                                                size="small"
-                                                sx={{
-                                                    backgroundColor:
-                                                        stripeService.getStatusColor(
-                                                            transaction.status
-                                                        ),
-                                                    color: 'white',
-                                                }}
-                                            />
-                                            {transaction.payment_method
-                                                ?.card && (
-                                                <>
-                                                    <CardBrandBox>
-                                                        {getCardBrandLogo(
-                                                            transaction
-                                                                .payment_method
-                                                                .card.brand
-                                                        )}
-                                                    </CardBrandBox>
-                                                    <Typography
-                                                        variant="body2"
-                                                        color="text.secondary"
-                                                    >
-                                                        ...
-                                                        {
-                                                            transaction
-                                                                .payment_method
-                                                                .card.last4
-                                                        }
-                                                    </Typography>
-                                                </>
-                                            )}
-                                        </PaymentMethodBox>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Typography variant="body2">
-                                            {transaction.description || '—'}
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Typography variant="body2">
-                                            {transaction.customer?.email || '—'}
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Typography
-                                            variant="body2"
-                                            color="text.secondary"
-                                        >
-                                            {stripeService.formatDate(
-                                                transaction.created
-                                            )}
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Typography
-                                            variant="body2"
-                                            color="text.secondary"
-                                        >
-                                            Example-merchant...
-                                        </Typography>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </StyledTable>
-                </TableContainer>
-            </TabPanel>
-
-            {/* Other tab panels would go here */}
-            {tabs.slice(1).map((tab, index) => (
-                <TabPanel key={tab.value} value={activeTab} index={index + 1}>
-                    <Box
-                        display="flex"
-                        justifyContent="center"
-                        alignItems="center"
-                        minHeight="400px"
+            {/* Summary Cards */}
+            <Grid container spacing={2} sx={{ mb: 3, px: 2 }}>
+                <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                    <SummaryCard
+                        className={selectedSummary === 'all' ? 'selected' : ''}
+                        onClick={() => handleSummaryClick('all')}
+                        sx={{ cursor: 'pointer' }}
                     >
-                        <Typography variant="h6" color="text.secondary">
-                            {tab.label} - Coming Soon
-                        </Typography>
-                    </Box>
-                </TabPanel>
-            ))}
+                        <SummaryCardContent>
+                            <SummaryNumber>{summary.total}</SummaryNumber>
+                            <SummaryLabel>All</SummaryLabel>
+                        </SummaryCardContent>
+                    </SummaryCard>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                    <SummaryCard
+                        className={
+                            selectedSummary === 'succeeded' ? 'selected' : ''
+                        }
+                        onClick={() => handleSummaryClick('succeeded')}
+                        sx={{ cursor: 'pointer' }}
+                    >
+                        <SummaryCardContent>
+                            <SummaryNumber>{summary.succeeded}</SummaryNumber>
+                            <SummaryLabel>Succeeded</SummaryLabel>
+                        </SummaryCardContent>
+                    </SummaryCard>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                    <SummaryCard
+                        className={
+                            selectedSummary === 'refunded' ? 'selected' : ''
+                        }
+                        onClick={() => handleSummaryClick('refunded')}
+                        sx={{ cursor: 'pointer' }}
+                    >
+                        <SummaryCardContent>
+                            <SummaryNumber>{summary.refunded}</SummaryNumber>
+                            <SummaryLabel>Refunded</SummaryLabel>
+                        </SummaryCardContent>
+                    </SummaryCard>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                    <SummaryCard
+                        className={
+                            selectedSummary === 'disputed' ? 'selected' : ''
+                        }
+                        onClick={() => handleSummaryClick('disputed')}
+                        sx={{ cursor: 'pointer' }}
+                    >
+                        <SummaryCardContent>
+                            <SummaryNumber>{summary.disputed}</SummaryNumber>
+                            <SummaryLabel>Disputed</SummaryLabel>
+                        </SummaryCardContent>
+                    </SummaryCard>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                    <SummaryCard
+                        className={
+                            selectedSummary === 'failed' ? 'selected' : ''
+                        }
+                        onClick={() => handleSummaryClick('failed')}
+                        sx={{ cursor: 'pointer' }}
+                    >
+                        <SummaryCardContent>
+                            <SummaryNumber>{summary.failed}</SummaryNumber>
+                            <SummaryLabel>Failed</SummaryLabel>
+                        </SummaryCardContent>
+                    </SummaryCard>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                    <SummaryCard
+                        className={
+                            selectedSummary === 'uncaptured' ? 'selected' : ''
+                        }
+                        onClick={() => handleSummaryClick('uncaptured')}
+                        sx={{ cursor: 'pointer' }}
+                    >
+                        <SummaryCardContent>
+                            <SummaryNumber>{summary.uncaptured}</SummaryNumber>
+                            <SummaryLabel>Uncaptured</SummaryLabel>
+                        </SummaryCardContent>
+                    </SummaryCard>
+                </Grid>
+            </Grid>
+
+            {/* Transactions Table */}
+            <TableContainer component={Paper} sx={{ borderRadius: 2, mx: 2 }}>
+                <StyledTable>
+                    <TableHead>
+                        <TableRow>
+                            <TableCell padding="checkbox"></TableCell>
+                            <TableCell>Amount</TableCell>
+                            <TableCell>Payment method</TableCell>
+                            <TableCell>Description</TableCell>
+                            <TableCell>Customer</TableCell>
+                            <TableCell>Date</TableCell>
+                            <TableCell>Settlement merchant</TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {transactions.map(transaction => (
+                            <TableRow key={transaction.id} hover>
+                                <TableCell padding="checkbox">
+                                    <input type="checkbox" />
+                                </TableCell>
+                                <TableCell>
+                                    <Typography
+                                        variant="body2"
+                                        fontWeight={500}
+                                    >
+                                        {stripeService.formatAmount(
+                                            transaction.amount,
+                                            transaction.currency
+                                        )}
+                                    </Typography>
+                                </TableCell>
+                                <TableCell>
+                                    <PaymentMethodBox>
+                                        {getStatusIcon(transaction.status)}
+                                        <StatusChip
+                                            label={transaction.status}
+                                            size="small"
+                                            sx={{
+                                                backgroundColor:
+                                                    stripeService.getStatusColor(
+                                                        transaction.status
+                                                    ),
+                                                color: 'white',
+                                            }}
+                                        />
+                                        {transaction.payment_method?.card && (
+                                            <>
+                                                <CardBrandBox>
+                                                    {getCardBrandLogo(
+                                                        transaction
+                                                            .payment_method.card
+                                                            .brand
+                                                    )}
+                                                </CardBrandBox>
+                                                <Typography
+                                                    variant="body2"
+                                                    color="text.secondary"
+                                                >
+                                                    ...
+                                                    {
+                                                        transaction
+                                                            .payment_method.card
+                                                            .last4
+                                                    }
+                                                </Typography>
+                                            </>
+                                        )}
+                                    </PaymentMethodBox>
+                                </TableCell>
+                                <TableCell>
+                                    <Typography variant="body2">
+                                        {transaction.description || '—'}
+                                    </Typography>
+                                </TableCell>
+                                <TableCell>
+                                    <Typography variant="body2">
+                                        {transaction.customer?.email || '—'}
+                                    </Typography>
+                                </TableCell>
+                                <TableCell>
+                                    <Typography
+                                        variant="body2"
+                                        color="text.secondary"
+                                    >
+                                        {stripeService.formatDate(
+                                            transaction.created
+                                        )}
+                                    </Typography>
+                                </TableCell>
+                                <TableCell>
+                                    <Typography
+                                        variant="body2"
+                                        color="text.secondary"
+                                    >
+                                        Example-merchant...
+                                    </Typography>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </StyledTable>
+            </TableContainer>
         </StyledContainer>
     );
 };

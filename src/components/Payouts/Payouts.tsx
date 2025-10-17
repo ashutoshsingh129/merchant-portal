@@ -3,7 +3,7 @@ import { Box, Typography } from '@mui/material';
 import { styled } from '@mui/material/styles';
 
 const StyledContainer = styled(Box)(({ theme }) => ({
-    padding: theme.spacing(2),
+    padding: theme.spacing(1),
     backgroundColor: '#f8fafc',
     minHeight: '100vh',
 }));

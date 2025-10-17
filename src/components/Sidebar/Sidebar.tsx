@@ -51,8 +51,9 @@ const StyledDrawer = styled(Drawer, {
             duration: theme.transitions.duration.enteringScreen,
         }),
         overflowX: 'hidden',
-        backgroundColor: '#1a1a1a',
-        color: '#ffffff',
+        backgroundColor: '#f7fafc',
+        color: '#2d3748',
+        borderRight: '1px solid #e2e8f0',
     },
 }));
 
@@ -64,24 +65,10 @@ const DrawerHeader = styled('div')(({ theme }) => ({
     justifyContent: 'flex-end',
 }));
 
-const LogoContainer = styled(Box)(({ theme }) => ({
-    display: 'flex',
-    alignItems: 'center',
-    padding: theme.spacing(2),
-    marginBottom: theme.spacing(2),
-}));
-
-const LogoText = styled(Typography)(({ theme }) => ({
-    fontWeight: 'bold',
-    fontSize: '1.2rem',
-    color: '#635bff',
-    marginLeft: theme.spacing(1),
-}));
-
 const SectionTitle = styled(Typography)(({ theme }) => ({
     fontSize: '0.75rem',
     fontWeight: 600,
-    color: '#6b7280',
+    color: '#4a5568',
     textTransform: 'uppercase',
     letterSpacing: '0.05em',
     padding: theme.spacing(1, 2),
@@ -92,12 +79,14 @@ const StyledListItemButton = styled(ListItemButton)(({ theme }) => ({
     borderRadius: theme.spacing(1),
     margin: theme.spacing(0.5, 1),
     '&:hover': {
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        backgroundColor: 'rgba(74, 85, 104, 0.1)',
     },
     '&.Mui-selected': {
-        backgroundColor: '#635bff',
+        backgroundColor: 'transparent',
+        color: '#7c3aed',
+        borderLeft: '3px solid #7c3aed',
         '&:hover': {
-            backgroundColor: '#635bff',
+            backgroundColor: 'rgba(124, 58, 237, 0.1)',
         },
     },
 }));
@@ -151,27 +140,6 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onToggle }) => {
                     {open ? <ChevronLeft /> : <ChevronRight />}
                 </IconButton>
             </DrawerHeader>
-
-            <LogoContainer>
-                <Box
-                    sx={{
-                        width: 32,
-                        height: 32,
-                        backgroundColor: '#635bff',
-                        borderRadius: 1,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'white',
-                        fontWeight: 'bold',
-                    }}
-                >
-                    S
-                </Box>
-                <Collapse in={open} timeout="auto" unmountOnExit>
-                    <LogoText>SimplyPay</LogoText>
-                </Collapse>
-            </LogoContainer>
 
             <List>
                 {mainMenuItems.map(item => (

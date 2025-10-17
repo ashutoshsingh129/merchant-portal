@@ -35,96 +35,16 @@ export interface ApiResponse<T> {
     success: boolean;
 }
 
-// Mock data for development
-const mockTransactions: StripeTransaction[] = [
-    {
-        id: 'pi_1H8x8x2eZvKYlo2C',
-        amount: 10000, // $100.00 in cents
-        currency: 'usd',
-        status: 'succeeded',
-        description: 'ok ok',
-        customer: {
-            id: 'cus_123',
-            email: 'abc@gmail.com',
-        },
-        payment_method: {
-            type: 'card',
-            card: {
-                brand: 'visa',
-                last4: '4242',
-            },
-        },
-        created: 1602334380,
-        fee: 290,
-        net: 9710,
-    },
-    {
-        id: 'pi_1H8x8x2eZvKYlo2D',
-        amount: 10000, // €100.00 in cents
-        currency: 'eur',
-        status: 'succeeded',
-        description: '(created by Testing Scenarios)',
-        payment_method: {
-            type: 'card',
-            card: {
-                brand: 'visa',
-                last4: '0077',
-            },
-        },
-        created: 1600774260,
-        fee: 290,
-        net: 9710,
-    },
-    {
-        id: 'pi_1H8x8x2eZvKYlo2E',
-        amount: 5000, // $50.00 in cents
-        currency: 'usd',
-        status: 'pending',
-        description: 'Test payment',
-        customer: {
-            id: 'cus_456',
-            email: 'test@example.com',
-        },
-        payment_method: {
-            type: 'card',
-            card: {
-                brand: 'mastercard',
-                last4: '5555',
-            },
-        },
-        created: 1602334500,
-    },
-    {
-        id: 'pi_1H8x8x2eZvKYlo2F',
-        amount: 2500, // $25.00 in cents
-        currency: 'usd',
-        status: 'refunded',
-        description: 'Refunded payment',
-        customer: {
-            id: 'cus_789',
-            email: 'refund@example.com',
-        },
-        payment_method: {
-            type: 'card',
-            card: {
-                brand: 'amex',
-                last4: '1234',
-            },
-        },
-        created: 1602334200,
-        fee: 73,
-        net: 2427,
-    },
-];
-
 export class StripeService {
-    private baseUrl: string;
-    private apiKey: string;
+    private stripe: any;
 
     constructor() {
-        this.baseUrl =
-            process.env.REACT_APP_API_BASE_URL || 'http://localhost:3001/api';
-        this.apiKey = process.env.REACT_APP_STRIPE_SECRET_KEY || '';
+        // Initialize Stripe with your secret key
+        // Note: In production, you should never expose secret keys in frontend
+        // This is for development/testing only
+        this.stripe = require('stripe')(
+            process.env.REACT_APP_STRIPE_SECRET_KEY
+        );
     }
 
     // Get transactions with pagination and filters
@@ -136,41 +56,61 @@ export class StripeService {
         customer?: string;
     }): Promise<ApiResponse<StripeTransactionListResponse>> {
         try {
-            // For now, return mock data
-            // In production, this would make actual API calls to your backend
-            // which would then call Stripe's API
-
-            const limit = params?.limit || 10;
-            const filteredTransactions = mockTransactions.filter(
-                transaction => {
-                    if (
-                        params?.status &&
-                        transaction.status !== params.status
-                    ) {
-                        return false;
-                    }
-                    if (
-                        params?.customer &&
-                        transaction.customer?.id !== params.customer
-                    ) {
-                        return false;
-                    }
-                    return true;
-                }
-            );
-
-            const response: StripeTransactionListResponse = {
-                data: filteredTransactions.slice(0, limit),
-                has_more: filteredTransactions.length > limit,
-                total_count: filteredTransactions.length,
+            const stripeParams: any = {
+                limit: params?.limit || 10,
             };
 
+            if (params?.starting_after)
+                stripeParams.starting_after = params.starting_after;
+            if (params?.ending_before)
+                stripeParams.ending_before = params.ending_before;
+            if (params?.status) stripeParams.status = params.status;
+            if (params?.customer) stripeParams.customer = params.customer;
+
+            const payments =
+                await this.stripe.paymentIntents.list(stripeParams);
+
+            // Transform Stripe data to match our interface
+            const transactions = payments.data.map((payment: any) => ({
+                id: payment.id,
+                amount: payment.amount,
+                currency: payment.currency,
+                status: payment.status,
+                description: payment.description,
+                customer: payment.customer
+                    ? {
+                          id: payment.customer,
+                          email: payment.receipt_email,
+                      }
+                    : undefined,
+                payment_method: payment.payment_method
+                    ? {
+                          type: payment.payment_method.type,
+                          card: payment.payment_method.card
+                              ? {
+                                    brand: payment.payment_method.card.brand,
+                                    last4: payment.payment_method.card.last4,
+                                }
+                              : undefined,
+                      }
+                    : undefined,
+                created: payment.created,
+                metadata: payment.metadata,
+                fee: payment.application_fee_amount,
+                net: payment.amount - (payment.application_fee_amount || 0),
+            }));
+
             return {
-                data: response,
+                data: {
+                    data: transactions,
+                    has_more: payments.has_more,
+                    total_count: transactions.length,
+                },
                 message: 'Transactions fetched successfully',
                 success: true,
             };
         } catch (error) {
+            console.error('Error fetching transactions:', error);
             return {
                 data: { data: [], has_more: false },
                 message:
@@ -187,18 +127,45 @@ export class StripeService {
         transactionId: string
     ): Promise<ApiResponse<StripeTransaction | null>> {
         try {
-            const transaction = mockTransactions.find(
-                t => t.id === transactionId
-            );
+            const payment =
+                await this.stripe.paymentIntents.retrieve(transactionId);
+
+            const transaction = {
+                id: payment.id,
+                amount: payment.amount,
+                currency: payment.currency,
+                status: payment.status,
+                description: payment.description,
+                customer: payment.customer
+                    ? {
+                          id: payment.customer,
+                          email: payment.receipt_email,
+                      }
+                    : undefined,
+                payment_method: payment.payment_method
+                    ? {
+                          type: payment.payment_method.type,
+                          card: payment.payment_method.card
+                              ? {
+                                    brand: payment.payment_method.card.brand,
+                                    last4: payment.payment_method.card.last4,
+                                }
+                              : undefined,
+                      }
+                    : undefined,
+                created: payment.created,
+                metadata: payment.metadata,
+                fee: payment.application_fee_amount,
+                net: payment.amount - (payment.application_fee_amount || 0),
+            };
 
             return {
-                data: transaction || null,
-                message: transaction
-                    ? 'Transaction fetched successfully'
-                    : 'Transaction not found',
-                success: !!transaction,
+                data: transaction,
+                message: 'Transaction fetched successfully',
+                success: true,
             };
         } catch (error) {
+            console.error('Error fetching transaction:', error);
             return {
                 data: null,
                 message:
@@ -223,10 +190,14 @@ export class StripeService {
         }>
     > {
         try {
-            const summary = mockTransactions.reduce(
-                (acc, transaction) => {
+            const payments = await this.stripe.paymentIntents.list({
+                limit: 100,
+            });
+
+            const summary = payments.data.reduce(
+                (acc: any, payment: any) => {
                     acc.total++;
-                    switch (transaction.status) {
+                    switch (payment.status) {
                         case 'succeeded':
                             acc.succeeded++;
                             break;
@@ -235,9 +206,6 @@ export class StripeService {
                             break;
                         case 'failed':
                             acc.failed++;
-                            break;
-                        case 'refunded':
-                            acc.refunded++;
                             break;
                         case 'canceled':
                             acc.disputed++;
@@ -264,6 +232,7 @@ export class StripeService {
                 success: true,
             };
         } catch (error) {
+            console.error('Error fetching transaction summary:', error);
             return {
                 data: {
                     total: 0,
