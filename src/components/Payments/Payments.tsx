@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     Box,
     Typography,
@@ -127,36 +127,34 @@ const Payments: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [selectedSummary, setSelectedSummary] = useState('all');
+    const hasFetched = useRef(false);
 
     useEffect(() => {
-        fetchTransactions();
-        fetchSummary();
+        // Prevent duplicate calls in React StrictMode
+        if (!hasFetched.current) {
+            hasFetched.current = true;
+            fetchData();
+        }
     }, []);
 
-    const fetchTransactions = async () => {
+    const fetchData = async () => {
         try {
             setLoading(true);
-            const response = await stripeService.getTransactions();
+            setError(null);
+
+            // Use the optimized method that fetches both data in a single API call
+            const response = await stripeService.getTransactionsWithSummary();
+
             if (response.success) {
-                setTransactions(response.data.data);
+                setTransactions(response.data.transactions.data);
+                setSummary(response.data.summary);
             } else {
                 setError(response.message);
             }
         } catch (err) {
-            setError('Failed to fetch transactions');
+            setError('Failed to fetch data');
         } finally {
             setLoading(false);
-        }
-    };
-
-    const fetchSummary = async () => {
-        try {
-            const response = await stripeService.getTransactionSummary();
-            if (response.success) {
-                setSummary(response.data);
-            }
-        } catch (err) {
-            console.error('Failed to fetch summary:', err);
         }
     };
 

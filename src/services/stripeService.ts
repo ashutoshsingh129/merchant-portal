@@ -177,23 +177,73 @@ export class StripeService {
         }
     }
 
-    // Get transaction summary/stats
-    async getTransactionSummary(): Promise<
+    // Get transactions and summary in a single optimized call
+    async getTransactionsWithSummary(params?: {
+        limit?: number;
+        starting_after?: string;
+        ending_before?: string;
+        status?: string;
+        customer?: string;
+    }): Promise<
         ApiResponse<{
-            total: number;
-            succeeded: number;
-            pending: number;
-            failed: number;
-            refunded: number;
-            disputed: number;
-            uncaptured: number;
+            transactions: StripeTransactionListResponse;
+            summary: {
+                total: number;
+                succeeded: number;
+                pending: number;
+                failed: number;
+                refunded: number;
+                disputed: number;
+                uncaptured: number;
+            };
         }>
     > {
         try {
-            const payments = await this.stripe.paymentIntents.list({
-                limit: 100,
-            });
+            const stripeParams: any = {
+                limit: params?.limit || 100, // Use higher limit to get more data for summary
+            };
 
+            if (params?.starting_after)
+                stripeParams.starting_after = params.starting_after;
+            if (params?.ending_before)
+                stripeParams.ending_before = params.ending_before;
+            if (params?.status) stripeParams.status = params.status;
+            if (params?.customer) stripeParams.customer = params.customer;
+
+            const payments =
+                await this.stripe.paymentIntents.list(stripeParams);
+
+            // Transform Stripe data to match our interface
+            const transactions = payments.data.map((payment: any) => ({
+                id: payment.id,
+                amount: payment.amount,
+                currency: payment.currency,
+                status: payment.status,
+                description: payment.description,
+                customer: payment.customer
+                    ? {
+                          id: payment.customer,
+                          email: payment.receipt_email,
+                      }
+                    : undefined,
+                payment_method: payment.payment_method
+                    ? {
+                          type: payment.payment_method.type,
+                          card: payment.payment_method.card
+                              ? {
+                                    brand: payment.payment_method.card.brand,
+                                    last4: payment.payment_method.card.last4,
+                                }
+                              : undefined,
+                      }
+                    : undefined,
+                created: payment.created,
+                metadata: payment.metadata,
+                fee: payment.application_fee_amount,
+                net: payment.amount - (payment.application_fee_amount || 0),
+            }));
+
+            // Calculate summary from the same data
             const summary = payments.data.reduce(
                 (acc: any, payment: any) => {
                     acc.total++;
@@ -227,26 +277,36 @@ export class StripeService {
             );
 
             return {
-                data: summary,
-                message: 'Transaction summary fetched successfully',
+                data: {
+                    transactions: {
+                        data: transactions,
+                        has_more: payments.has_more,
+                        total_count: transactions.length,
+                    },
+                    summary,
+                },
+                message: 'Transactions and summary fetched successfully',
                 success: true,
             };
         } catch (error) {
-            console.error('Error fetching transaction summary:', error);
+            console.error('Error fetching transactions with summary:', error);
             return {
                 data: {
-                    total: 0,
-                    succeeded: 0,
-                    pending: 0,
-                    failed: 0,
-                    refunded: 0,
-                    disputed: 0,
-                    uncaptured: 0,
+                    transactions: { data: [], has_more: false },
+                    summary: {
+                        total: 0,
+                        succeeded: 0,
+                        pending: 0,
+                        failed: 0,
+                        refunded: 0,
+                        disputed: 0,
+                        uncaptured: 0,
+                    },
                 },
                 message:
                     error instanceof Error
                         ? error.message
-                        : 'Failed to fetch transaction summary',
+                        : 'Failed to fetch transactions with summary',
                 success: false,
             };
         }
