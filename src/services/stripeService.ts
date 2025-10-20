@@ -21,6 +21,12 @@ export interface StripeTransaction {
     metadata?: Record<string, string>;
     fee?: number;
     net?: number;
+    // Additional PaymentIntent fields for richer UI
+    amount_received?: number;
+    amount_capturable?: number;
+    capture_method?: string;
+    confirmation_method?: string;
+    payment_method_types?: string[];
 }
 
 export interface StripeTransactionListResponse {
@@ -98,6 +104,11 @@ export class StripeService {
                 metadata: payment.metadata,
                 fee: payment.application_fee_amount,
                 net: payment.amount - (payment.application_fee_amount || 0),
+                amount_received: payment.amount_received,
+                amount_capturable: payment.amount_capturable,
+                capture_method: payment.capture_method,
+                confirmation_method: payment.confirmation_method,
+                payment_method_types: payment.payment_method_types,
             }));
 
             return {
@@ -157,6 +168,11 @@ export class StripeService {
                 metadata: payment.metadata,
                 fee: payment.application_fee_amount,
                 net: payment.amount - (payment.application_fee_amount || 0),
+                amount_received: payment.amount_received,
+                amount_capturable: payment.amount_capturable,
+                capture_method: payment.capture_method,
+                confirmation_method: payment.confirmation_method,
+                payment_method_types: payment.payment_method_types,
             };
 
             return {
@@ -241,6 +257,11 @@ export class StripeService {
                 metadata: payment.metadata,
                 fee: payment.application_fee_amount,
                 net: payment.amount - (payment.application_fee_amount || 0),
+                amount_received: payment.amount_received,
+                amount_capturable: payment.amount_capturable,
+                capture_method: payment.capture_method,
+                confirmation_method: payment.confirmation_method,
+                payment_method_types: payment.payment_method_types,
             }));
 
             // Calculate summary from the same data

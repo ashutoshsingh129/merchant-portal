@@ -74,9 +74,11 @@ const SummaryLabel = styled(Typography)(({ theme }) => ({
 }));
 
 const StyledTable = styled(Table)(({ theme }) => ({
+    minWidth: 1200, // force horizontal scroll on small viewports
     '& .MuiTableCell-root': {
         borderBottom: '1px solid #f1f5f9',
         padding: theme.spacing(1.5),
+        whiteSpace: 'nowrap',
     },
     '& .MuiTableHead-root .MuiTableCell-root': {
         backgroundColor: '#f8fafc',
@@ -85,6 +87,7 @@ const StyledTable = styled(Table)(({ theme }) => ({
         color: '#64748b',
         textTransform: 'uppercase',
         letterSpacing: '0.05em',
+        whiteSpace: 'nowrap',
     },
 }));
 
@@ -309,13 +312,21 @@ const Payments: React.FC = () => {
             </Grid>
 
             {/* Transactions Table */}
-            <TableContainer component={Paper} sx={{ borderRadius: 2, mx: 2 }}>
+            <TableContainer
+                component={Paper}
+                sx={{ borderRadius: 2, mx: 2, overflowX: 'auto' }}
+            >
                 <StyledTable>
                     <TableHead>
                         <TableRow>
                             <TableCell padding="checkbox"></TableCell>
                             <TableCell>Amount</TableCell>
                             <TableCell>Payment method</TableCell>
+                            <TableCell>Amount received</TableCell>
+                            <TableCell>Capturable</TableCell>
+                            <TableCell>Capture method</TableCell>
+                            <TableCell>Confirmation</TableCell>
+                            <TableCell>PM types</TableCell>
                             <TableCell>Description</TableCell>
                             <TableCell>Customer</TableCell>
                             <TableCell>Date</TableCell>
@@ -376,6 +387,45 @@ const Payments: React.FC = () => {
                                             </>
                                         )}
                                     </PaymentMethodBox>
+                                </TableCell>
+                                <TableCell>
+                                    <Typography variant="body2">
+                                        {typeof transaction.amount_received ===
+                                        'number'
+                                            ? stripeService.formatAmount(
+                                                  transaction.amount_received,
+                                                  transaction.currency
+                                              )
+                                            : '—'}
+                                    </Typography>
+                                </TableCell>
+                                <TableCell>
+                                    <Typography variant="body2">
+                                        {typeof transaction.amount_capturable ===
+                                        'number'
+                                            ? stripeService.formatAmount(
+                                                  transaction.amount_capturable,
+                                                  transaction.currency
+                                              )
+                                            : '—'}
+                                    </Typography>
+                                </TableCell>
+                                <TableCell>
+                                    <Typography variant="body2">
+                                        {transaction.capture_method || '—'}
+                                    </Typography>
+                                </TableCell>
+                                <TableCell>
+                                    <Typography variant="body2">
+                                        {transaction.confirmation_method || '—'}
+                                    </Typography>
+                                </TableCell>
+                                <TableCell>
+                                    <Typography variant="body2">
+                                        {transaction.payment_method_types?.join(
+                                            ', '
+                                        ) || '—'}
+                                    </Typography>
                                 </TableCell>
                                 <TableCell>
                                     <Typography variant="body2">
