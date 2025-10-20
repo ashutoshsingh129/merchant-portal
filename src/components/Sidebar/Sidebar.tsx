@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
     Drawer,
@@ -27,6 +27,8 @@ import {
     ConnectWithoutContact,
     Payment,
     TrendingUp,
+    ExpandLess,
+    ExpandMore,
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 
@@ -112,6 +114,12 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onToggle }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const [selectedItem, setSelectedItem] = useState(location.pathname);
+    const [transactionsOpen, setTransactionsOpen] = useState(true);
+
+    // Sync selectedItem with current pathname
+    useEffect(() => {
+        setSelectedItem(location.pathname);
+    }, [location.pathname]);
 
     const mainMenuItems = [
         {
@@ -119,18 +127,30 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onToggle }) => {
             label: 'Transactions',
             icon: <Receipt />,
             path: '/transactions',
-        },
-        {
-            id: 'payouts',
-            label: 'Payouts',
-            icon: <AccountBalance />,
-            path: '/payouts',
+            subItems: [
+                {
+                    id: 'payments',
+                    label: 'Payments',
+                    icon: <Payment />,
+                    path: '/payments',
+                },
+                {
+                    id: 'payouts',
+                    label: 'Payouts',
+                    icon: <AccountBalance />,
+                    path: '/transactions/payouts',
+                },
+            ],
         },
     ];
 
     const handleItemClick = (itemId: string, path: string) => {
-        setSelectedItem(itemId);
+        setSelectedItem(path);
         navigate(path);
+    };
+
+    const handleTransactionsToggle = () => {
+        setTransactionsOpen(!transactionsOpen);
     };
 
     return (
@@ -143,17 +163,70 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onToggle }) => {
 
             <List>
                 {mainMenuItems.map(item => (
-                    <ListItem key={item.id} disablePadding>
-                        <StyledListItemButton
-                            selected={selectedItem === item.path}
-                            onClick={() => handleItemClick(item.id, item.path)}
+                    <React.Fragment key={item.id}>
+                        {/* Main Transactions Item */}
+                        <ListItem disablePadding>
+                            <StyledListItemButton
+                                onClick={handleTransactionsToggle}
+                                sx={{ pl: 2 }}
+                            >
+                                <StyledListItemIcon>
+                                    {item.icon}
+                                </StyledListItemIcon>
+                                <Collapse
+                                    in={open}
+                                    timeout="auto"
+                                    unmountOnExit
+                                >
+                                    <StyledListItemText primary={item.label} />
+                                </Collapse>
+                                <Collapse
+                                    in={open}
+                                    timeout="auto"
+                                    unmountOnExit
+                                >
+                                    {transactionsOpen ? (
+                                        <ExpandLess />
+                                    ) : (
+                                        <ExpandMore />
+                                    )}
+                                </Collapse>
+                            </StyledListItemButton>
+                        </ListItem>
+
+                        {/* Sub Items */}
+                        <Collapse
+                            in={transactionsOpen && open}
+                            timeout="auto"
+                            unmountOnExit
                         >
-                            <StyledListItemIcon>{item.icon}</StyledListItemIcon>
-                            <Collapse in={open} timeout="auto" unmountOnExit>
-                                <StyledListItemText primary={item.label} />
-                            </Collapse>
-                        </StyledListItemButton>
-                    </ListItem>
+                            <List component="div" disablePadding>
+                                {item.subItems?.map(subItem => (
+                                    <ListItem key={subItem.id} disablePadding>
+                                        <StyledListItemButton
+                                            selected={
+                                                selectedItem === subItem.path
+                                            }
+                                            onClick={() =>
+                                                handleItemClick(
+                                                    subItem.id,
+                                                    subItem.path
+                                                )
+                                            }
+                                            sx={{ pl: 4 }}
+                                        >
+                                            <StyledListItemIcon>
+                                                {subItem.icon}
+                                            </StyledListItemIcon>
+                                            <StyledListItemText
+                                                primary={subItem.label}
+                                            />
+                                        </StyledListItemButton>
+                                    </ListItem>
+                                ))}
+                            </List>
+                        </Collapse>
+                    </React.Fragment>
                 ))}
             </List>
         </StyledDrawer>

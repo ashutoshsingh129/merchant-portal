@@ -113,7 +113,7 @@ const CardBrandBox = styled(Box)(({ theme }) => ({
     fontWeight: 'bold',
 }));
 
-const Transactions: React.FC = () => {
+const Payments: React.FC = () => {
     const [transactions, setTransactions] = useState<StripeTransaction[]>([]);
     const [summary, setSummary] = useState({
         total: 0,
@@ -215,7 +215,7 @@ const Transactions: React.FC = () => {
     return (
         <StyledContainer>
             <HeaderSection>
-                <PageTitle>Transactions</PageTitle>
+                <PageTitle>Payments</PageTitle>
             </HeaderSection>
 
             {error && (
@@ -416,4 +416,4 @@ const Transactions: React.FC = () => {
     );
 };
 
-export default Transactions;
+export default Payments;

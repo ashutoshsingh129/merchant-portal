@@ -8,7 +8,7 @@ import { useAppSelector } from './store';
 import { lightTheme, darkTheme } from './theme';
 import Layout from './components/Layout/Layout';
 import Dashboard from './components/Dashboard/Dashboard';
-import Transactions from './components/Transactions';
+import Payments from './components/Payments';
 import Payouts from './components/Payouts';
 
 const AppRoutes: React.FC = () => {
@@ -21,11 +21,12 @@ const AppRoutes: React.FC = () => {
             <Router>
                 <Layout>
                     <Routes>
-                        <Route path="/" element={<Transactions />} />
+                        <Route path="/" element={<Payments />} />
                         <Route path="/dashboard" element={<Dashboard />} />
+                        <Route path="/payments" element={<Payments />} />
                         <Route
-                            path="/transactions"
-                            element={<Transactions />}
+                            path="/transactions/payouts"
+                            element={<Payouts />}
                         />
                         <Route path="/payouts" element={<Payouts />} />
                     </Routes>
